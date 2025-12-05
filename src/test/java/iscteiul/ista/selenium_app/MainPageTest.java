@@ -4,6 +4,9 @@ import com.codeborne.selenide.*;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
+import java.io.File;
+import java.time.Duration;
+
 
 import static com.codeborne.selenide.Selenide.*;
 import static com.codeborne.selenide.Condition.*;
@@ -16,8 +19,11 @@ public class MainPageTest {
     @BeforeAll
     public static void setUpAll() {
         Configuration.browserSize = "1280x800";
+        Configuration.downloadsFolder = "downloads";
+        Configuration.fileDownload = FileDownloadMode.FOLDER; // evita problemas com direct HTTP -> mais confiável
         SelenideLogger.addListener("allure", new AllureSelenide());
     }
+
 
     @BeforeEach
     public void setUp() {
@@ -80,7 +86,6 @@ public class MainPageTest {
                 "document.querySelectorAll('.ch2-container, .ch2-overlay, .fc-consent-root').forEach(e => e.remove());"
         );
     }
-
 
 
     @Test
@@ -196,34 +201,56 @@ public class MainPageTest {
     }
 
     @Test
-    public void scrollAndExplore() throws InterruptedException {
+    public void supportMenu() throws InterruptedException {
 
-        closeAllCookies();  // <<< SUPER IMPORTANTE
+        // 1) Scroll down – isto ativa o popup escondido
+        executeJavaScript("window.scrollTo(0, 600);");
+        Thread.sleep(700);
 
-        // Encontrar botão Explore
-        SelenideElement exploreBtn = $$("span[data-test='button__content']")
-                .findBy(text("Explore"))
-                .shouldBe(visible);
+        // 2) Subir outra vez
+        executeJavaScript("window.scrollTo(0, 0);");
+        Thread.sleep(700);
 
-        // Scroll suave
-        executeJavaScript(
-                "arguments[0].scrollIntoView({behavior:'smooth', block:'center'});",
-                exploreBtn
-        );
-        Thread.sleep(800);
-
-        // Destacar para visualização
-        executeJavaScript("arguments[0].style.border='3px solid #00FF88';", exploreBtn);
+        // 3) AGORA o popup já existe → remover tudo
+        closeAllCookies();
         Thread.sleep(500);
 
-        // Clique via JavaScript (à prova de popups)
-        executeJavaScript("arguments[0].click();", exploreBtn);
+        // 4) Agora já pode clicar no menu Support
+        $("button[data-test='main-menu-item-action'][aria-label='Support: Open submenu']")
+                .shouldBe(visible, enabled)
+                .click();
 
-        Thread.sleep(1000);
+        Thread.sleep(1200);
 
-        System.out.println("✔ Scroll + Explore validado!");
+        System.out.println("✔ Support menu validado com sucesso!");
     }
+    @Test
+    public void checkboxesTest() throws InterruptedException {
 
+        // Abrir página estável e própria para testes
+        open("https://the-internet.herokuapp.com/checkboxes");
+
+        // Encontrar as checkboxes
+        SelenideElement checkbox1 = $$("input[type='checkbox']").get(0);
+        SelenideElement checkbox2 = $$("input[type='checkbox']").get(1);
+
+        // Scroll só para visualização no vídeo
+        executeJavaScript("arguments[0].scrollIntoView(true);", checkbox1);
+        Thread.sleep(500);
+
+        // Interação real
+        checkbox1.shouldBe(visible, enabled).click();     // selecionar
+        Thread.sleep(500);
+
+        checkbox2.shouldBe(visible, enabled).click();     // desselecionar
+        Thread.sleep(500);
+
+        // Validações
+        checkbox1.shouldBe(checked);
+        checkbox2.shouldNotBe(checked);
+
+        System.out.println("✔ Checkboxes test validado com sucesso!");
+    }
 
 
 }

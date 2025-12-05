@@ -41,13 +41,14 @@
             <version>${junit.version}</version>
         </dependency>
 
-        <!-- Allure + Selenide -->
+        <!-- Allure Selenide Listener -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-selenide</artifactId>
             <version>${allure.version}</version>
         </dependency>
 
+        <!-- Allure Integration with JUnit 5 -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-junit5</artifactId>
@@ -66,20 +67,30 @@
     <build>
         <plugins>
 
-            <!-- JUnit test runner -->
+            <!-- JUnit 5 test execution -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
+
+                    <!-- Diretório onde o Allure guarda os resultados -->
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
+
+                    <!-- Necessário para JUnit 5 -->
+                    <properties>
+                        <property>
+                            <name>junit.platform.output.capture.stdout</name>
+                            <value>true</value>
+                        </property>
+                    </properties>
                 </configuration>
             </plugin>
 
-            <!-- Allure command-line reports -->
+            <!-- Allure CLI report generator -->
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>

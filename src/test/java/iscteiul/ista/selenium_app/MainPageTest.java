@@ -12,35 +12,51 @@ import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.*;
 
+import java.time.Duration;
+import static com.codeborne.selenide.Condition.exist;
 public class MainPageTest {
     MainPage mainPage = new MainPage();
-
     @BeforeAll
     public static void setUpAll() {
         Configuration.browserSize = "1280x800";
         SelenideLogger.addListener("allure", new AllureSelenide());
     }
 
+    public boolean isElementPresent(String cssSelector, Duration timeout) {
+        try {
+            // Wait for the element to exist within the specified timeout
+            $(cssSelector).should(exist, timeout);
+            return true;
+        } catch (Throwable e) {
+            // If the element does not exist after the timeout, catch the error and return false
+            return false;
+        }
+    }
+
     @BeforeEach
     public void setUp() {
-        open("https://www.jetbrains.com/");
+        Selenide.open("https://www.jetbrains.com/");
+        String denyButtonSelector = "button.ch2-btn.ch2-deny-all-btn.ch2-btn-primary";
+
+        if (isElementPresent(denyButtonSelector, Duration.ofSeconds(2))) {
+            $(denyButtonSelector).click();
+        } else {
+        }
     }
 
     @Test
-    public void search() {
+    public void search() throws InterruptedException {
         mainPage.searchButton.click();
 
-        $("[data-test='search-input']").sendKeys("Selenium");
+        $("input[data-test$='inner']").sendKeys("Selenium");
         $("button[data-test='full-search-button']").click();
-
-        $("input[data-test='search-input']").shouldHave(attribute("value", "Selenium"));
+        $("input[data-test$='inner']").shouldHave(attribute("value", "Selenium"));
     }
-
     @Test
     public void toolsMenu() {
         mainPage.toolsMenu.click();
 
-        $("div[data-test='main-submenu']").shouldBe(visible);
+        $("div[data-test='main-menu-item']").shouldBe(visible);
     }
 
     @Test

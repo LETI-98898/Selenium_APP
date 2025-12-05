@@ -1,1 +1,53 @@
+package iscteiul.ista.selenium_app.basic_interaction;
+
+import com.codeborne.selenide.Condition;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.codeborne.selenide.Selenide.*;
+
+import iscteiul.ista.selenium_app.MainPage;
+
+public class Basic_interaction {
+
+    MainPage mainPage = new MainPage();
+
+    @BeforeEach
+    public void openSite() {
+        open("https://www.jetbrains.com/");
+        closeCookiesIfPresent();
+    }
+
+    private void closeCookiesIfPresent() {
+        if ($("button.ch2-allow-all-btn").exists()) {
+            $("button.ch2-allow-all-btn").click();
+            sleep(400);
+        }
+        if ($("button[data-testid='uc-accept-all-button']").exists()) {
+            $("button[data-testid='uc-accept-all-button']").click();
+            sleep(400);
+        }
+    }
+
+    @Test
+    public void scrollAndOpenSupportMenu() throws InterruptedException {
+
+        // --- 1) Scroll para baixo ---
+        executeJavaScript("window.scrollTo(0, 700);");
+        sleep(600);
+
+        // --- 2) Scroll para cima ---
+        executeJavaScript("window.scrollTo(0, 0);");
+        sleep(600);
+
+        // --- 3) Clicar no menu SUPPORT ---
+        $("button[data-test='main-menu-item-action'][aria-label='Support: Open submenu']")
+                .shouldBe(Condition.visible)
+                .click();
+
+        sleep(1200); // só visual
+
+        System.out.println("✔ Scroll + abertura do menu Support validado!");
+    }
+}
 

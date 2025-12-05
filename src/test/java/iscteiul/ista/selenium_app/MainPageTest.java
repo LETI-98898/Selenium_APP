@@ -25,18 +25,61 @@ public class MainPageTest {
         handleCookies();
     }
 
-    /**
-     * Accept All cookies if cookie popup appears
-     */
     private void handleCookies() {
-        SelenideElement accept = $("button.ch2-allow-all-btn");
+        // 1 — Popup simples
+        if ($("button.ch2-allow-all-btn").exists()) {
+            $("button.ch2-allow-all-btn").click();
+            sleep(500);
+            return;
+        }
 
-        if (accept.exists()) {
-            accept.click();
+        // 2 — Popup grande (Cookie Settings)
+        if ($("button.ch2-btn.ch2-allow-all-btn.ch2-btn-primary").exists()) {
+            $("button.ch2-btn.ch2-allow-all-btn.ch2-btn-primary").click();
+            sleep(500);
+            return;
+        }
+
+        // 3 — Nova UI JetBrains 2025 (às vezes aparece)
+        if ($("button[data-testid='uc-accept-all-button']").exists()) {
+            $("button[data-testid='uc-accept-all-button']").click();
             sleep(500);
         }
     }
+    private void closeAllCookies() {
 
+        // Lista de selectores que podem bloquear cliques
+        String[] cookieSelectors = {
+
+                // Botão principal (hidden às vezes)
+                "button.ch2-allow-all-btn",
+
+                // Botões dentro de containers alternativos
+                "div.ch2-container button.ch2-allow-all-btn",
+
+                // Botão de dismiss interno
+                "button[data-test='button__accept-all']",
+
+                // Botões genéricos usados pela JetBrains
+                "[data-test='close-button']",
+                "[data-test='dismiss-button']"
+        };
+
+        // Clicar em todos os elementos encontrados (mesmo que estejam escondidos)
+        for (String selector : cookieSelectors) {
+            if ($(selector).exists()) {
+                try {
+                    executeJavaScript("arguments[0].click();", $(selector));
+                    sleep(300);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Remover overlays que ainda bloqueiam cliques
+        executeJavaScript(
+                "document.querySelectorAll('.ch2-container, .ch2-overlay, .fc-consent-root').forEach(e => e.remove());"
+        );
+    }
 
 
 
@@ -126,5 +169,61 @@ public class MainPageTest {
 
         System.out.println("✔ Navegação para Find Your Tool validada com sucesso!");
     }
+    @Test
+    public void storeIndividualUse() throws InterruptedException {
+
+        // Abrir o menu Store
+        $("button[data-test='main-menu-item-action'][aria-label='Store: Open submenu']")
+                .shouldBe(visible)
+                .click();
+
+        Thread.sleep(800);
+
+        // Clicar em "For Individual Use"
+        $$("span._mainSubmenuItem__title_9khr8w_1")
+                .findBy(text("For Individual Use"))
+                .shouldBe(visible)
+                .click();
+
+        Thread.sleep(1500);
+
+        // Fechar o popup caso apareça
+        if ($("button[data-test='close-button']").exists()) {
+            $("button[data-test='close-button']").click();
+        }
+
+        System.out.println("✔ Store → For Individual Use validado!");
+    }
+
+    @Test
+    public void scrollAndExplore() throws InterruptedException {
+
+        closeAllCookies();  // <<< SUPER IMPORTANTE
+
+        // Encontrar botão Explore
+        SelenideElement exploreBtn = $$("span[data-test='button__content']")
+                .findBy(text("Explore"))
+                .shouldBe(visible);
+
+        // Scroll suave
+        executeJavaScript(
+                "arguments[0].scrollIntoView({behavior:'smooth', block:'center'});",
+                exploreBtn
+        );
+        Thread.sleep(800);
+
+        // Destacar para visualização
+        executeJavaScript("arguments[0].style.border='3px solid #00FF88';", exploreBtn);
+        Thread.sleep(500);
+
+        // Clique via JavaScript (à prova de popups)
+        executeJavaScript("arguments[0].click();", exploreBtn);
+
+        Thread.sleep(1000);
+
+        System.out.println("✔ Scroll + Explore validado!");
+    }
+
+
 
 }
